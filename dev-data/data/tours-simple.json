@@ -137,5 +137,6 @@
   { "id": 9, "name": "test tour", "duration": "10 days", "difficulty": "easy" },
   { "id": 10, "name": "test tour", "duration": "10 days", "difficulty": "easy" },
   { "id": 11, "name": "test tour 2", "duration": "5 days", "difficulty": "easy" },
-  { "id": 12, "name": "test tour 3", "duration": "2 days", "difficulty": "easy" }
+  { "id": 12, "name": "test tour 3", "duration": "2 days", "difficulty": "easy" },
+  { "id": 13, "name": "test tour 3", "duration": "2 days", "difficulty": "easy" }
 ]
