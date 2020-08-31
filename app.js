@@ -34,11 +34,51 @@ app.get('/api/v1/tours', (req, res) => {
   });
 });
 
-// create post request so user can add a new tour
-app.post('/api/v1/tours', (req, res) => {
+// Create route for specific tour id
+// :id creates a param that can be used as a variable.
+// :id? would create an optional param
+app.get('/api/v1/tours/:id', (req, res) => {
+  console.log(req.params);
+
+  const id = req.params.id * 1; // convert string to num
+  const tour = tours.find((tour) => tour.id === id);
+
+  // add check to throw error if id is > length of array or if  the find method cannot find the id.
+  // if (id > tours.length) {
+  if (!tour) {
+    return res.status(404).json({
+      status: 'fail',
+      message: 'invalid id',
+    });
+  }
   res.status(200).json({
     status: 'success',
+    data: {
+      tour,
+    },
   });
+});
+
+// create post request so user can add a new tour
+app.post('/api/v1/tours', (req, res) => {
+  // console.log(req.body);
+  const newId = tours[tours.length - 1].id + 1;
+  const newTour = Object.assign({ id: newId }, req.body);
+
+  tours.push(newTour);
+
+  fs.writeFile(
+    `${__dirname}/dev-data/data/tours-simple.json`,
+    JSON.stringify(tours),
+    (err) => {
+      res.status(201).json({
+        status: 'success',
+        data: {
+          tour: newTour,
+        },
+      }); // created
+    }
+  );
 });
 
 const port = 3000;
