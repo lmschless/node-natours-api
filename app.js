@@ -147,15 +147,22 @@ const deleteUser = (req, res) => {
 // app.patch('/api/v1/tours:id/', updateTour);
 // app.delete('/api/v1/tours:id/', deleteTour);
 
+//// 3) ROUTES
 // chain calls on the same route, functions the same as the code above.
 
-app.route('/api/v1/tours').get(getAllTours).post(createTour);
+const tourRouter = express.Router();
+const userRouter = express.Router();
 
-app.route('/api/v1/tours/:id').get(getTour).delete(deleteTour).patch(updateTour);
+tourRouter.route('/').get(getAllTours).post(createTour);
 
-app.route('/api/v1/users').get(getAllUsers).post(createUser);
+tourRouter.route('/:id').get(getTour).delete(deleteTour).patch(updateTour);
 
-app.route('/api/v1/users/:id').get(getUser).patch(updateUser).delete(deleteUser);
+userRouter.route('/').get(getAllUsers).post(createUser);
+
+userRouter.route('/:id').get(getUser).patch(updateUser).delete(deleteUser);
+
+app.use('/api/v1/users', userRouter);
+app.use('/api/v1/tours', tourRouter);
 
 //// 4) START SERVER
 const port = 3000;
