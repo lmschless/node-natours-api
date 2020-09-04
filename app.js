@@ -1,16 +1,15 @@
-import fs from 'fs';
-import path from 'path';
 import express from 'express';
 import morgan from 'morgan';
+import tourRouter from './routes/tourRoutes.js';
+import userRouter from './routes/userRoutes.js';
 
-const __dirname = path.resolve();
+// App entry point file handles database config, server variables, etc.
+
 const app = express();
 
+//// 1) MIDDLEWARE
 app.use(express.json());
 
-//// 1) MIDDLEWARES
-
-//
 app.use(morgan('dev'));
 
 app.use((req, res, next) => {
@@ -18,157 +17,22 @@ app.use((req, res, next) => {
   next(); // need to call next every time.
 });
 
-// middleware that handles adding the request time
+// middleware that adds the request time
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
+///////////////////////////
+///////////////////////////
 
-// Read data at top level so it only gets executed once
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/dev-data/data/tours-simple.json`));
+// MOUNT ROUTERS (from imported files)
 
-//// 2) ROUTE HANDLERS
-// refactored way of writing routes and responses
-
-const getAllTours = (req, res) => {
-  console.log(req.requestTime);
-  res.status(200).json({
-    status: 'success',
-    requestedAt: req.requestTime,
-    results: tours.length,
-    data: {
-      tours,
-    },
-  });
-};
-const getTour = (req, res) => {
-  console.log(req.params);
-
-  const id = req.params.id * 1; // convert string to num
-  const tour = tours.find((tour) => tour.id === id);
-  // add check to throw error if id is > length of array or if  the find method cannot find the id.
-  // if (id > tours.length) {
-  if (!tour) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'invalid id',
-    });
-  }
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour,
-    },
-  });
-};
-
-const createTour = (req, res) => {
-  const newId = tours[tours.length - 1].id + 1;
-  const newTour = Object.assign({ id: newId }, req.body);
-  tours.push(newTour);
-
-  fs.writeFile(
-    `${__dirname}/dev-data/data/tours-simple.json`,
-    JSON.stringify(tours),
-    (err) => {
-      res.status(201).json({
-        // created
-        status: 'success',
-        data: {
-          tour: newTour,
-        },
-      });
-    }
-  );
-};
-
-const updateTour = (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'invalid id',
-    });
-  }
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour: '<Updated tour here...>',
-    },
-  });
-};
-
-const deleteTour = (req, res) => {
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({
-      status: 'fail',
-      message: 'invalid id',
-    });
-  }
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-};
-
-const getAllUsers = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined.',
-  });
-};
-const getUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined.',
-  });
-};
-const createUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined.',
-  });
-};
-const updateUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined.',
-  });
-};
-const deleteUser = (req, res) => {
-  res.status(500).json({
-    status: 'error',
-    message: 'This route is not yet defined.',
-  });
-};
-
-// app.get('/api/v1/tours', getAllTours);
-// app.get('/api/v1/tours/:id', getTour);
-// app.post('/api/v1/tours/', createTour);
-// app.patch('/api/v1/tours:id/', updateTour);
-// app.delete('/api/v1/tours:id/', deleteTour);
-
-//// 3) ROUTES
-// chain calls on the same route, functions the same as the code above.
-
-const tourRouter = express.Router();
-const userRouter = express.Router();
-
-tourRouter.route('/').get(getAllTours).post(createTour);
-
-tourRouter.route('/:id').get(getTour).delete(deleteTour).patch(updateTour);
-
-userRouter.route('/').get(getAllUsers).post(createUser);
-
-userRouter.route('/:id').get(getUser).patch(updateUser).delete(deleteUser);
-
+// apply the users middleware and use the imported users file
 app.use('/api/v1/users', userRouter);
+// apply the tours middleware and use the imported tours file
 app.use('/api/v1/tours', tourRouter);
 
-//// 4) START SERVER
-const port = 3000;
-app.listen(port, () => {
-  console.log(`App running on port ${port}`);
-});
+export default app;
 
 // add first route and response
 // app.get('/', (req, res) => {
