@@ -2,15 +2,22 @@ import express from 'express';
 import morgan from 'morgan';
 import tourRouter from './routes/tourRoutes.js';
 import userRouter from './routes/userRoutes.js';
+import path from 'path';
 
+const __dirname = path.resolve();
 // App entry point file handles database config, server variables, etc.
 
 const app = express();
 
 //// 1) MIDDLEWARE
-app.use(express.json());
+// removes console logger if in prod
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
-app.use(morgan('dev'));
+app.use(express.json());
+// express middleware which sets the public folder as root and serves up html based on the path. /overview
+app.use(express.static(`${__dirname}/public`));
 
 app.use((req, res, next) => {
   console.log('Hello from the middleware!');
