@@ -1,73 +1,87 @@
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
-import Tour from '../models/tourModel';
+import Tour from '../models/tourModel.js';
 
 const __dirname = path.resolve();
 
-// use param middleware to check if id is valid instead of checking inside every function.
-const checkID = (req, res, next, val) => {
-  console.log(`Tour ID is: ${val}`);
-  if (req.params.id * 1 > tours.length) {
-    return res.status(404).json({
+const getAllTours = async (req, res) => {
+  try {
+    // use Tour from tourModel and use mongoose find method. (select)
+    const tours = await Tour.find();
+    res.status(200).json({
+      status: 'success',
+      results: tours.length,
+      data: {
+        tours,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
       status: 'fail',
-      message: 'invalid id',
+      message: err,
     });
   }
-  next(); // only runs if the previous check is successful
 };
 
-const checkBody = (req, res, next) => {
-  if (!req.body.name || !req.body.price) {
-    return res.status(400).json({
+const getTour = async (req, res) => {
+  try {
+    const tour = await Tour.findById(req.params.id);
+    // findById is a helper function to do:
+    // Tour.findOne({_id: req.params.id})
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour,
+      },
+    });
+  } catch (err) {
+    res.status(404).json({
       status: 'fail',
-      message: 'Missing Name or Price',
+      message: err,
     });
   }
-  next();
 };
 
-const getAllTours = (req, res) => {
-  console.log(req.requestTime);
-  res.status(200).json({
-    status: 'success',
-    requestedAt: req.requestTime,
-    // results: tours.length,
-    // data: {
-    //   tours,
-    // },
-  });
-};
-const getTour = (req, res) => {
-  console.log(req.params);
-  const id = req.params.id * 1; // convert string to num
-
-  // const tour = tours.find((tour) => tour.id === id);
-  // res.status(200).json({
-  //   status: 'success',
-  //   data: {
-  //     tour,
-  //   },
-  // });
+// use async/await
+// use Tour model directly and call the create method.
+const createTour = async (req, res) => {
+  try {
+    // saves the returned promise as newTour which accepted the request body object.
+    const newTour = await Tour.create(req.body);
+    res.status(201).json({
+      // created
+      status: 'success',
+      data: {
+        tour: newTour,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Invalid data sent!',
+    });
+  }
 };
 
-const createTour = (req, res) => {
-  res.status(201).json({
-    // created
-    status: 'success',
-    // data: {
-    //   tour: newTour,
-    // },
-  });
-};
-
-const updateTour = (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    data: {
-      tour: '<Updated tour here...>',
-    },
-  });
+const updateTour = async (req, res) => {
+  try {
+    // findByIdAndUpdate takes an id, what to update, and an options obj
+    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    res.status(200).json({
+      status: 'success',
+      data: {
+        tour: tour,
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'fail',
+      message: 'Invalid data sent!',
+    });
+  }
 };
 
 const deleteTour = (req, res) => {
@@ -78,11 +92,9 @@ const deleteTour = (req, res) => {
 };
 
 export default {
-  checkID,
   getAllTours,
   createTour,
   getTour,
   deleteTour,
   updateTour,
-  checkBody,
 };

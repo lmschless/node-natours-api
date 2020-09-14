@@ -1,14 +1,7 @@
 import express from 'express';
 import controller from '../controllers/tourController.js';
-const {
-  getAllTours,
-  createTour,
-  getTour,
-  deleteTour,
-  updateTour,
-  checkID,
-  checkBody,
-} = controller;
+
+const { getAllTours, createTour, getTour, deleteTour, updateTour } = controller;
 
 const router = express.Router();
 
@@ -17,9 +10,9 @@ const router = express.Router();
 // If not, send back a 400 (invalid req)
 
 // using imported middleware from tourController to check if ID is valid.
-router.param('id', checkID);
+// router.param('id', checkID);
 // add checkBody middleware to be called before create tour
-router.route('/').get(getAllTours).post(checkBody, createTour);
+router.route('/').get(getAllTours).post(createTour);
 
 router.route('/:id').get(getTour).delete(deleteTour).patch(updateTour);
 
