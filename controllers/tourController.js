@@ -1,3 +1,4 @@
+/* eslint-disable node/no-unsupported-features/es-syntax */
 import express from 'express';
 import path from 'path';
 import Tour from '../models/tourModel.js';
@@ -6,20 +7,61 @@ const __dirname = path.resolve();
 
 const getAllTours = async (req, res) => {
   try {
+    console.log(req.query);
+    // Build query
+    // 1) Filtering
     const queryObj = { ...req.query };
     const excludedFields = ['page', 'sort', 'limit', 'fields'];
     // loop through queryObj and delete any queries that match the excluded fields
     excludedFields.forEach((el) => delete queryObj[el]);
+
+    //// 2) Advanced Filtering
+    // filter object for >= 5
+    // {difficulty : 'easy, duration: {$gte:5 }
+    // req.query filter object:
+    // { duration: { gte: '5' }, difficulty: 'easy' }
+
+    // replace gte, gt, lte, lt
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => {
+      return `$${match}`;
+    });
+    console.log(JSON.parse(queryStr));
+
     // use Tour from tourModel and use mongoose find method. (select)
-    const tours = await Tour.find(queryObj);
+    let query = Tour.find(JSON.parse(queryStr));
+
+    // 3) Sorting
+    if (req.query.sort) {
+      // replace commas with spaces so mongoose can use multiple sort by categories.
+      const sortBy = req.query.sort.split(',').join(' ');
+      query = query.sort(sortBy);
+      // sort('price ratingsAverage')
+    } else {
+      // default sort when query doesn't contain one
+      query = query.sort('-createdAt');
+    }
+
+    // 4) Field limiting
+    if (req.query.fields) {
+      const fields = req.query.fields.split(',').join(' ');
+      query = query.select(fields);
+    } else {
+      // default: exclude mongo's __v field
+      query = query.select('-__v');
+    }
+
+    // Execute query
+    const tours = await query;
 
     // using mongoose methods to query
-    // const tours = await Tour.find()
+    // const query = Tour.find()
     //   .where('duration')
     //   .equals(5)
     //   .where('difficulty')
     //   .equals('easy');
 
+    // Send response after awaiting query
     res.status(200).json({
       status: 'success',
       results: tours.length,
